@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"sacache"
+	"github.com/sashirin/sacache"
 )
 
 const (
