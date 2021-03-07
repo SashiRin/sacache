@@ -21,8 +21,8 @@ func TestCache(t *testing.T) {
 		t.Errorf("key: %v not found in cache!", key)
 	}
 
-	if v.Value() != val {
-		t.Errorf("val = %v; expected %v", v.Value(), val)
+	if v.Value != val {
+		t.Errorf("val = %v; expected %v", v.Value, val)
 	}
 	// Delete
 	table.Delete(key)

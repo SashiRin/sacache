@@ -1,38 +1,32 @@
 package sacache
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // CacheItem is the item inside of cache table.
 type CacheItem struct {
 	// The value of cache item.
-	value interface{}
+	Value interface{} `json:"value"`
 	// Created time.
-	createdTime time.Time
+	CreatedTime time.Time `json:"-"`
 	// TTL of this item.
-	timeToLive time.Duration
+	TimeToLive time.Duration `json:"ttl"`
 }
 
 // NewCacheItem returns a pointer of newly created CacheItem.
 func NewCacheItem(val interface{}, ttl time.Duration) *CacheItem {
 	t := time.Now()
 	return &CacheItem{
-		value:       val,
-		createdTime: t,
-		timeToLive:  ttl,
+		Value:       val,
+		CreatedTime: t,
+		TimeToLive:  ttl,
 	}
 }
 
-// Value returns the value of CacheItem.
-func (item *CacheItem) Value() interface{} {
-	return item.value
-}
-
-// CreatedTime returns the created time of CacheItem.
-func (item *CacheItem) CreatedTime() time.Time {
-	return item.createdTime
-}
-
-// TimeToLive returns the ttl of CacheItem.
-func (item *CacheItem) TimeToLive() time.Duration {
-	return item.timeToLive
+// JSON returns Json bytes of cache item.
+func (item *CacheItem) JSON() ([]byte, error) {
+	b, err := json.Marshal(item)
+	return b, err
 }
