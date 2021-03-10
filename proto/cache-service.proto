@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package sacache;
+option go_package = "github.com/sashirin/sacache";
+
+message CacheItem {
+    string key = 1;
+    string value = 2;
+    string expireTime = 3;
+}
+
+message GetKey {
+    string key = 1;
+}
+
+message Success {
+    bool success = 1;
+}
+
+service CacheService {
+    rpc Set (CacheItem) returns (Success);
+    rpc Get (GetKey) returns (CacheItem);
+    rpc Delete (GetKey) returns (Success);
+}

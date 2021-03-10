@@ -1,99 +1,41 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/sashirin/sacache"
+	pb "github.com/sashirin/sacache/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
-	apiCacheServiceName = "sacache"
-	apiBaseURL          = "/api/"
-
-	// url for cache service.
-	apiCacheURL = apiBaseURL + apiCacheServiceName + "/"
-	version     = "0.1.0"
+	version = "0.1.0"
 )
 
 var (
-	port    int
-	logfile string
+	port             int
+	logfile          string
+	cacheServiceName string
 
 	cache *sacache.SaCache
 )
 
 func init() {
 	flag.IntVar(&port, "port", 9999, "the port to listen.")
-	flag.StringVar(&logfile, "logfile", "", "Path of logfile.")
-}
-
-func cacheGetHandler(rw http.ResponseWriter, r *http.Request) {
-	key := r.URL.Path[len(apiCacheURL):]
-	if key == "" {
-		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte("key is empty."))
-		log.Print("key is empty.")
-		return
-	}
-	val, ok := cache.Get(key)
-	if !ok {
-		log.Print("entry not found.")
-		rw.WriteHeader(http.StatusInternalServerError)
-		rw.Write([]byte("entry not found."))
-		return
-	}
-	b, err := val.JSON()
-	if err != nil {
-		panic(err)
-	}
-	rw.Write(b)
-}
-
-func cachePutHandler(rw http.ResponseWriter, r *http.Request) {
-	key := r.URL.Path[len(apiCacheURL):]
-	if key == "" {
-		rw.WriteHeader(http.StatusBadRequest)
-		rw.Write([]byte("key is empty."))
-		log.Print("key is empty.")
-		return
-	}
-
-	entry, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Print(err)
-		rw.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	v := sacache.NewCacheItem(0, time.Duration(0))
-	json.Unmarshal(entry, v)
-	cache.Set(key, v)
-	log.Printf("stored \"%s\" in cache.", key)
-	rw.WriteHeader(http.StatusCreated)
-}
-
-func cacheRequestHandler() http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			cacheGetHandler(rw, r)
-		case http.MethodPut:
-			cachePutHandler(rw, r)
-		}
-	})
+	flag.StringVar(&logfile, "logfile", "", "path of logfile.")
+	flag.StringVar(&cacheServiceName, "name", "SaCacheServiceName", "name of service.")
 }
 
 func main() {
 	flag.Parse()
 
-	fmt.Printf("SaCache HTTP Server v%s\n", version)
+	fmt.Printf("SaCache Server v%s\n", version)
 
 	var logger *log.Logger
 
@@ -108,14 +50,22 @@ func main() {
 		logger = log.New(f, "", log.LstdFlags)
 	}
 
-	cache = sacache.NewSaCache("ServerCacheService")
+	grpcServer := grpc.NewServer()
+
+	pb.RegisterCacheServiceServer(grpcServer, sacache.NewSaCache(cacheServiceName))
+
+	reflection.Register(grpcServer)
 
 	logger.Print("cache initialized successfully.")
 
-	// handle requests.
-	http.Handle(apiCacheURL, cacheRequestHandler())
+	address := ":" + strconv.Itoa(port)
 
-	logger.Printf("starting server on :%d", port)
-	strPort := ":" + strconv.Itoa(port)
-	log.Fatal("ListenAndServe: ", http.ListenAndServe(strPort, nil))
+	lis, err := net.Listen("tcp", address)
+	if err != nil {
+		logger.Fatalf("failed to listen: %v", err)
+	}
+	logger.Printf("starting server on %v", address)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("err in serving gRPC %v\n", err)
+	}
 }
