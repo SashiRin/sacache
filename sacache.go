@@ -40,6 +40,10 @@ func (c *SaCache) Get(ctx context.Context, args *pb.GetKey) (*pb.CacheItem, erro
 	if !ok {
 		return nil, ErrNotFound
 	}
+	// item is already expired.
+	if val.expireTime.Before(time.Now()) {
+		return nil, ErrExpired
+	}
 	log.Printf("get item with key: %v", key)
 	return &pb.CacheItem{
 		Key:        key,
@@ -53,6 +57,12 @@ func (c *SaCache) Set(ctx context.Context, item *pb.CacheItem) (*pb.Success, err
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	expire, _ := time.Parse(time.RFC3339, item.ExpireTime)
+	// given item is already expired before set.
+	if expire.Before(time.Now()) {
+		return &pb.Success{
+			Success: false,
+		}, ErrExpired
+	}
 	c.items[item.Key] = NewCacheItem(item.Value, expire)
 	log.Printf("set item: %v %v %v", item.Key, item.Value, expire)
 	return &pb.Success{
