@@ -50,7 +50,7 @@ func (c *SaCache) Set(key string, val string, expire time.Time) error {
 	if expire.Before(time.Now()) {
 		return ErrExpired
 	}
-	c.items[key] = NewCacheItem(val, expire)
+	c.items[key] = newCacheItem(val, expire)
 	return nil
 }
 

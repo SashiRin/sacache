@@ -8,26 +8,27 @@ import (
 func TestCache(t *testing.T) {
 	table := NewSaCache("hello")
 	var (
-		key = 11
-		val = 233
-		ttl = time.Duration(20)
-		it1 = NewCacheItem(val, ttl)
+		key    = string("2333")
+		val    = string("xsffaf2323212424")
+		expire = time.Now().Add(time.Duration(20))
 	)
 	// Set
-	table.Set(key, it1)
+	table.Set(key, val, expire)
 	// Get
-	v, ok := table.Get(key)
-	if !ok {
+	v, err := table.Get(key)
+	if err == ErrNotFound {
 		t.Errorf("key: %v not found in cache!", key)
+	} else if err == ErrExpired {
+		t.Errorf("key: %v expired in cache!", key)
 	}
 
-	if v.Value != val {
-		t.Errorf("val = %v; expected %v", v.Value, val)
+	if v.value != val {
+		t.Errorf("val = %v; expected %v", v.value, val)
 	}
 	// Delete
 	table.Delete(key)
-	v, ok = table.Get(key)
-	if ok {
+	v, err = table.Get(key)
+	if err == nil || err != ErrNotFound {
 		t.Errorf("key: %v not deleted in cache!", key)
 	}
 }

@@ -22,8 +22,8 @@ func (item *CacheItem) ExpireTime() time.Time {
 	return item.expireTime
 }
 
-// NewCacheItem returns a pointer of newly created CacheItem.
-func NewCacheItem(val string, expire time.Time) *CacheItem {
+// newCacheItem returns a pointer of newly created CacheItem.
+func newCacheItem(val string, expire time.Time) *CacheItem {
 	return &CacheItem{
 		value:      val,
 		expireTime: expire,

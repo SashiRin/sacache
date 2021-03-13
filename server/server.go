@@ -57,7 +57,7 @@ func (s *CacheServer) Set(ctx context.Context, item *pb.CacheItem) (*pb.Success,
 			Success: false,
 		}, err
 	}
-	log.Printf("set item: %v %v %v", item.Key, item.Value, expire)
+	log.Printf("set item: %v, %v, %v", item.Key, item.Value, expire)
 	return &pb.Success{
 		Success: true,
 	}, nil

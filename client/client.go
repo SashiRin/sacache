@@ -42,9 +42,9 @@ func main() {
 
 	r, err := c.Set(ctx, &pb.CacheItem{Key: key, Value: value, ExpireTime: expire})
 	if err != nil || !r.GetSuccess() {
-		log.Fatalf("could not set item: %v %v %v", key, value, expire)
+		log.Fatalf("could not set item: %v, %v, %v", key, value, expire)
 	}
-	log.Printf("Set item %v %v %v successful", key, value, expire)
+	log.Printf("Set item %v, %v, %v, successful", key, value, expire)
 	getKey := &pb.GetKey{
 		Key: key,
 	}
