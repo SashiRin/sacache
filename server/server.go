@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/sashirin/sacache"
 	pb "github.com/sashirin/sacache/proto"
@@ -15,7 +17,7 @@ import (
 )
 
 const (
-	version = "0.1.0"
+	version = "0.2.0"
 )
 
 var (
@@ -25,6 +27,56 @@ var (
 
 	cache *sacache.SaCache
 )
+
+// CacheServer is the cache service server.
+type CacheServer struct {
+	pb.UnimplementedCacheServiceServer
+}
+
+// Get returns the CacheItem pointer of given key.
+func (s *CacheServer) Get(ctx context.Context, args *pb.GetKey) (*pb.CacheItem, error) {
+	key := args.Key
+	item, err := cache.Get(key)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("get item with key: %v", key)
+	return &pb.CacheItem{
+		Key:        key,
+		Value:      item.Value(),
+		ExpireTime: item.ExpireTime().Format(time.RFC3339),
+	}, nil
+}
+
+// Set add new k-v pair in the cache.
+func (s *CacheServer) Set(ctx context.Context, item *pb.CacheItem) (*pb.Success, error) {
+	expire, _ := time.Parse(time.RFC3339, item.ExpireTime)
+	err := cache.Set(item.Key, item.Value, expire)
+	if err != nil {
+		return &pb.Success{
+			Success: false,
+		}, err
+	}
+	log.Printf("set item: %v %v %v", item.Key, item.Value, expire)
+	return &pb.Success{
+		Success: true,
+	}, nil
+}
+
+// Delete deletes value given key.
+func (s *CacheServer) Delete(ctx context.Context, args *pb.GetKey) (*pb.Success, error) {
+	key := args.Key
+	err := cache.Delete(key)
+	if err != nil {
+		return &pb.Success{
+			Success: false,
+		}, err
+	}
+	log.Printf("delete item with key: %v", key)
+	return &pb.Success{
+		Success: true,
+	}, nil
+}
 
 func init() {
 	flag.IntVar(&port, "port", 9999, "the port to listen.")
@@ -50,9 +102,11 @@ func main() {
 		logger = log.New(f, "", log.LstdFlags)
 	}
 
+	cache = sacache.NewSaCache(cacheServiceName)
+
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterCacheServiceServer(grpcServer, sacache.NewSaCache(cacheServiceName))
+	pb.RegisterCacheServiceServer(grpcServer, &CacheServer{})
 
 	reflection.Register(grpcServer)
 
