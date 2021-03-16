@@ -15,15 +15,49 @@ type SaCache struct {
 
 	// Lock
 	lock sync.RWMutex
+
+	// Queue
+	queue CacheQueue
+
+	// Element Count
+	count int64
 }
 
 // NewSaCache returns the pointer of a newly created SaCache instance.
-func NewSaCache(name string) *SaCache {
-	table := &SaCache{
+func NewSaCache(name string, config Config) *SaCache {
+	cache := &SaCache{
 		name:  name,
 		items: make(map[string]*CacheItem),
+		queue: CacheQueue{},
+		count: 0,
 	}
-	return table
+	if config.CleanDuration > 0 {
+		go func() {
+			ticker := time.NewTicker(config.CleanDuration)
+			defer ticker.Stop()
+			for t := range time.Tick(config.CleanDuration) {
+				cache.cleanUp(t)
+			}
+		}()
+	}
+	return cache
+}
+
+// cleanUp removes expired items from cache and queue.
+func (c *SaCache) cleanUp(currTimeStamp time.Time) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	for {
+		if item, err := c.queue.Front(); err != nil {
+			break
+		} else {
+			if !item.expireTime.Before(currTimeStamp) {
+				break
+			}
+			c.Delete(item.key)
+			c.queue.Pop()
+		}
+	}
 }
 
 // Get returns the CacheItem pointer of given key.
@@ -50,7 +84,10 @@ func (c *SaCache) Set(key string, val string, expire time.Time) error {
 	if expire.Before(time.Now()) {
 		return ErrExpired
 	}
-	c.items[key] = newCacheItem(key, val, expire)
+	item := newCacheItem(key, val, expire)
+	c.items[key] = item
+	c.queue.Push(item)
+	c.count++
 	return nil
 }
 
@@ -59,5 +96,6 @@ func (c *SaCache) Delete(key string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	delete(c.items, key)
+	c.count--
 	return nil
 }

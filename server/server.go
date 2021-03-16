@@ -102,7 +102,7 @@ func main() {
 		logger = log.New(f, "", log.LstdFlags)
 	}
 
-	cache = sacache.NewSaCache(cacheServiceName)
+	cache = sacache.NewSaCache(cacheServiceName, sacache.DefaultConfig())
 
 	grpcServer := grpc.NewServer()
 
