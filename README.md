@@ -1,6 +1,6 @@
-# sacache
+# SaCache
 
-SaCache is a fast, concurrent in-memory cache service written in pure Go. It uses gRPC for communicating with clients and supports item expiration function. It is still under development. The goal of SaCache is reducing extra costs(GC) as much as possible and making it faster and faster.
+SaCache(a.k.a Sashi Cache) is a fast, concurrent in-memory cache service written in pure Go. It uses gRPC for communicating with clients and supports item expiration function. It is still under development. The goal of SaCache is reducing extra costs(GC) as much as possible and making it faster and faster.
 
 ## Usage
 
