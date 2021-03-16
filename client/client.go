@@ -14,7 +14,7 @@ const (
 	address            = ":9999"
 	defaultKey         = "world"
 	defaultValue       = "23333"
-	defaultDurationStr = "200s"
+	defaultDurationStr = "5s"
 )
 
 func main() {

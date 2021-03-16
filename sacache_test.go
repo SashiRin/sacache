@@ -6,21 +6,20 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	table := NewSaCache("hello")
+	cache := NewSaCache("hello", DefaultConfig())
 	var (
-		key    = string("2333")
-		val    = string("xsffaf2323212424")
-		durationStr = "200s"
+		key      = string("2333")
+		val      = string("xsffaf2323212424")
+		duration = 3 * time.Second
 	)
-	duration, _ := time.ParseDuration(durationStr)
 	expire := time.Now().Add(duration)
 	// Set
-	err := table.Set(key, val, expire)
+	err := cache.Set(key, val, expire)
 	if err != nil {
 		t.Fatal("unknown error occurs in Set")
 	}
 	// Get
-	v, err := table.Get(key)
+	v, err := cache.Get(key)
 	if err == ErrNotFound {
 		t.Fatalf("key: %v not found in cache!", key)
 	} else if err == ErrExpired {
@@ -31,9 +30,14 @@ func TestCache(t *testing.T) {
 		t.Errorf("val = %v; expected %v", v.value, val)
 	}
 	// Delete
-	table.Delete(key)
-	_, err = table.Get(key)
+	cache.Delete(key)
+	_, err = cache.Get(key)
 	if err == nil || err != ErrNotFound {
 		t.Errorf("key: %v not deleted in cache!", key)
+	}
+	// cleanUp
+	time.Sleep(5 * time.Second)
+	if cache.count != 0 {
+		t.Error("expired item is not removed")
 	}
 }
