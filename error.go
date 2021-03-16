@@ -7,4 +7,6 @@ var (
 	ErrNotFound = errors.New("given key not found")
 	// ErrExpired means given item is expired.
 	ErrExpired = errors.New("item expired")
+	// ErrQueueEmpty means queue is empty.
+	ErrQueueEmpty = errors.New("queue empty")
 )

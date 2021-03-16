@@ -8,8 +8,8 @@ import (
 func TestCache(t *testing.T) {
 	table := NewSaCache("hello")
 	var (
-		key    = string("2333")
-		val    = string("xsffaf2323212424")
+		key         = string("2333")
+		val         = string("xsffaf2323212424")
 		durationStr = "200s"
 	)
 	duration, _ := time.ParseDuration(durationStr)
