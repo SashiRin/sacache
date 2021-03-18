@@ -52,7 +52,7 @@ func (c *SaCache) Get(key string) (*CacheItem, error) {
 	return c.shards[shardIndex].get(key)
 }
 
-// Set add new k-v pair in the cache.
+// Set adds new k-v pair in the cache.
 func (c *SaCache) Set(key string, val string, expire time.Time) error {
 	shardIndex := c.hasher.Hash(key) % uint64(len(c.shards))
 	return c.shards[shardIndex].set(key, val, expire)
