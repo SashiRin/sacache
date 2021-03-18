@@ -18,6 +18,11 @@ func TestCache(t *testing.T) {
 	if err != nil {
 		t.Fatal("unknown error occurs in Set")
 	}
+	// Already expired set
+	alreadyExpiredTime := time.Now().Add(-1 * time.Second)
+	if err = cache.Set(key, val, alreadyExpiredTime); err != ErrExpired {
+		t.Errorf("already expired time %v set failed", alreadyExpiredTime)
+	}
 	// Get
 	v, err := cache.Get(key)
 	if err == ErrNotFound {
@@ -37,7 +42,7 @@ func TestCache(t *testing.T) {
 	}
 	// cleanUp
 	time.Sleep(5 * time.Second)
-	if cache.count != 0 {
+	if cache.Count() != 0 {
 		t.Error("expired item is not removed")
 	}
 }
