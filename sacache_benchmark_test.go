@@ -140,7 +140,7 @@ func BenchmarkSaCacheSet(b *testing.B) {
 				if k[0] == 0 {
 					k[1]++
 				}
-				if err := sacache.Set(string(k), v, time.Minute); err != nil {
+				if err := sacache.Set(string(k), v, time.Now().Add(time.Minute)); err != nil {
 					panic(fmt.Errorf("unexpected error: %s", err))
 				}
 			}
@@ -158,7 +158,7 @@ func BenchmarkSaCacheGet(b *testing.B) {
 		if k[0] == 0 {
 			k[1]++
 		}
-		if err := sacache.Set(string(k), v, time.Minute); err != nil {
+		if err := sacache.Set(string(k), v, time.Now().Add(time.Minute)); err != nil {
 			b.Fatalf("unexpected error: %s", err)
 		}
 	}
@@ -199,7 +199,7 @@ func BenchmarkSaCacheSetGet(b *testing.B) {
 				if k[0] == 0 {
 					k[1]++
 				}
-				if err := sacache.Set(string(k), v, time.Minute); err != nil {
+				if err := sacache.Set(string(k), v, time.Now().Add(time.Minute)); err != nil {
 					panic(fmt.Errorf("unexpected error: %s", err))
 				}
 			}

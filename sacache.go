@@ -53,9 +53,9 @@ func (c *SaCache) Get(key string) (*CacheItem, error) {
 }
 
 // Set adds new k-v pair in the cache.
-func (c *SaCache) Set(key string, val string, ttl time.Duration) error {
+func (c *SaCache) Set(key string, val string, expire time.Time) error {
 	shardIndex := c.hasher.Hash(key) % uint64(len(c.shards))
-	return c.shards[shardIndex].set(key, val, time.Now().Add(ttl))
+	return c.shards[shardIndex].set(key, val, expire)
 }
 
 // Delete deletes value given key.
