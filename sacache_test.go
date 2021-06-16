@@ -12,16 +12,14 @@ func TestCache(t *testing.T) {
 		val      = string("xsffaf2323212424")
 		duration = 3 * time.Second
 	)
-	expire := time.Now().Add(duration)
 	// Set
-	err := cache.Set(key, val, expire)
+	err := cache.Set(key, val, duration)
 	if err != nil {
 		t.Fatal("unknown error occurs in Set")
 	}
 	// Already expired set
-	alreadyExpiredTime := time.Now().Add(-1 * time.Second)
-	if err = cache.Set(key, val, alreadyExpiredTime); err != ErrExpired {
-		t.Errorf("already expired time %v set failed", alreadyExpiredTime)
+	if err = cache.Set(key, val, -1*time.Second); err != ErrExpired {
+		t.Errorf("already expired time %v set failed", time.Now().Add(-1*time.Second))
 	}
 	// Get
 	v, err := cache.Get(key)
