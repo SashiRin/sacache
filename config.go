@@ -18,3 +18,11 @@ func DefaultConfig() Config {
 		Hasher:        newFNVHasher(),
 	}
 }
+
+func NewConfig(clean time.Duration, shard int) Config {
+	return Config{
+		CleanDuration: clean,
+		ShardNumber:   shard,
+		Hasher:        newFNVHasher(),
+	}
+}
