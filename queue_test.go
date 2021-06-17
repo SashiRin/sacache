@@ -6,48 +6,40 @@ import (
 )
 
 func TestQueueInit(t *testing.T) {
-	que, err := newCacheQueue()
+	pq := newCacheQueue()
 	// init status
-	if err != nil {
-		t.Error(err)
-	}
-	if que.front != nil {
-		t.Error("init queue front is not nil")
-	}
-	if que.Len() != 0 {
+	if pq.Len() != 0 {
 		t.Error("init queue is not empty")
 	}
 }
 
 func TestQueueLen(t *testing.T) {
-	que, _ := newCacheQueue()
-	que.Push(newCacheItem("hello", "world", time.Now()))
-	que.Push(newCacheItem("23321", "sxssffs", time.Now()))
-	if que.Len() != 2 {
-		t.Errorf("queue length error, val=%v, expect=%v", que.Len(), 2)
+	pq := newCacheQueue()
+	pq.PushItem(newCacheItem("hello", "world", time.Now()))
+	pq.PushItem(newCacheItem("23321", "sxssffs", time.Now()))
+	if pq.Len() != 2 {
+		t.Errorf("queue length error, val=%v, expect=%v", pq.Len(), 2)
 	}
-	que.Pop()
-	if que.Len() != 1 {
-		t.Errorf("queue length error, val=%v, expect=%v", que.Len(), 1)
+	pq.PopItem()
+	if pq.Len() != 1 {
+		t.Errorf("queue length error, val=%v, expect=%v", pq.Len(), 1)
 	}
-	que.Pop()
-	if que.Len() != 0 {
-		t.Errorf("queue length error, val=%v, expect=%v", que.Len(), 0)
+	pq.PopItem()
+	if pq.Len() != 0 {
+		t.Errorf("queue length error, val=%v, expect=%v", pq.Len(), 0)
 	}
 }
 
 func TestQueuePushAndPop(t *testing.T) {
-	que, _ := newCacheQueue()
+	pq := newCacheQueue()
 	var (
 		key         = "hello"
 		value       = "world"
 		duration, _ = time.ParseDuration("200s")
 		expire      = time.Now().Add(duration)
 	)
-	if err := que.Push(newCacheItem(key, value, expire)); err != nil {
-		t.Fatal(err)
-	}
-	item, err := que.Pop()
+	pq.PushItem(newCacheItem(key, value, expire))
+	item, err := pq.PopItem()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,32 +51,45 @@ func TestQueuePushAndPop(t *testing.T) {
 	}
 	if item.ExpireTime() != expire {
 		t.Errorf("item value error, expect: %v, got: %v", expire, item.ExpireTime())
+	}
+
+	if pq.Len() != 0 {
+		t.Errorf("queue is not empty")
 	}
 }
 
-func TestQueueFront(t *testing.T) {
-	que, err := newCacheQueue()
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestQueueTop(t *testing.T) {
+	pq := newCacheQueue()
 	var (
-		key         = "hello"
-		value       = "world"
-		duration, _ = time.ParseDuration("200s")
-		expire      = time.Now().Add(duration)
+		key1    = "hello"
+		value1  = "world"
+		expire1 = time.Now().Add(200 * time.Second)
+
+		key2    = "golang"
+		value2  = "heap"
+		expire2 = time.Now().Add(100 * time.Second)
+
+		key3    = "python"
+		value3  = "value"
+		expire3 = time.Now().Add(300 * time.Second)
 	)
-	que.Push(newCacheItem(key, value, expire))
-	item, err := que.Front()
+	pq.PushItem(newCacheItem(key1, value1, expire1))
+	// expire early
+	pq.PushItem(newCacheItem(key2, value2, expire2))
+	pq.PushItem(newCacheItem(key3, value3, expire3))
+
+	item, err := pq.TopItem()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if item.Key() != key {
-		t.Errorf("item key error, expect: %v, got: %v", key, item.Key())
+	// early expire item should be 2nd item
+	if item.Key() != key2 {
+		t.Errorf("item key error, expect: %v, got: %v", key2, item.Key())
 	}
-	if item.Value() != value {
-		t.Errorf("item value error, expect: %v, got: %v", value, item.Value())
+	if item.Value() != value2 {
+		t.Errorf("item value error, expect: %v, got: %v", value2, item.Value())
 	}
-	if item.ExpireTime() != expire {
-		t.Errorf("item value error, expect: %v, got: %v", expire, item.ExpireTime())
+	if item.ExpireTime() != expire2 {
+		t.Errorf("item value error, expect: %v, got: %v", expire2, item.ExpireTime())
 	}
 }

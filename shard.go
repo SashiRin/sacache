@@ -13,7 +13,7 @@ type CacheShard struct {
 	lock sync.RWMutex
 
 	// Queue
-	queue CacheQueue
+	queue PriorityQueue
 
 	// Element Count
 	count uint64
@@ -22,7 +22,6 @@ type CacheShard struct {
 func newCacheShard() *CacheShard {
 	return &CacheShard{
 		items: make(map[string]*CacheItem),
-		queue: CacheQueue{},
 		count: 0,
 	}
 }
@@ -75,7 +74,7 @@ func (cs *CacheShard) cleanUp(currTimeStamp time.Time) {
 	cs.lock.Lock()
 	defer cs.lock.Unlock()
 	for {
-		if item, err := cs.queue.Front(); err != nil {
+		if item, err := cs.queue.TopItem(); err != nil {
 			break
 		} else {
 			if !item.expireTime.Before(currTimeStamp) {
