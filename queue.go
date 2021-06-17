@@ -1,61 +1,69 @@
 package sacache
 
-type CacheNode struct {
-	item *CacheItem
-	next *CacheNode
+import "container/heap"
+
+type PriorityQueue []*CacheItem
+
+// Len returns the number of elements of queue.
+func (pq PriorityQueue) Len() int {
+	return len(pq)
 }
 
-type CacheQueue struct {
-	front *CacheNode
-	count int
+// Less is comparetor for expire time
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].expireTime.Before(pq[j].expireTime)
 }
 
-func newCacheNode(item *CacheItem) (*CacheNode, error) {
-	node := &CacheNode{
-		item: item,
-	}
-	return node, nil
+// Swap
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
 }
 
-func newCacheQueue() (*CacheQueue, error) {
+func newCacheQueue() *PriorityQueue {
 	// front is nil at init.
-	que := &CacheQueue{}
-	return que, nil
+	pq := &PriorityQueue{}
+	heap.Init(pq)
+
+	return pq
 }
 
 // Push push a pointer of cache item.
-func (que *CacheQueue) Push(item *CacheItem) error {
-	node, err := newCacheNode(item)
-	if err != nil {
-		return err
-	}
-	// insert node infront of front: new_front(node)->old_front(front).
-	node.next = que.front
-	que.front = node
-	que.count++
-	return nil
+func (pq *PriorityQueue) Push(item interface{}) {
+	*pq = append(*pq, item.(*CacheItem))
+}
+
+// Push item to pq and auto re-adjust
+func (pq *PriorityQueue) PushItem(item *CacheItem) {
+	heap.Push(pq, item)
 }
 
 // Pop pop the front of queue or nil when queue is empty.
-func (que *CacheQueue) Pop() (*CacheItem, error) {
-	if que.Len() == 0 {
-		return nil, ErrQueueEmpty
+func (pq *PriorityQueue) Pop() interface{} {
+	if pq.Len() == 0 {
+		return nil
 	}
-	frontItem := que.front.item
-	que.front = que.front.next
-	que.count--
-	return frontItem, nil
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil
+	*pq = old[0 : n-1]
+	return item
 }
 
-// Len returns the number of elements of queue.
-func (que *CacheQueue) Len() int {
-	return que.count
+// Pop item from pq and auto re-adjust
+func (pq *PriorityQueue) PopItem() (*CacheItem, error) {
+	if pq.Len() == 0 {
+		return nil, ErrQueueEmpty
+	}
+	item := heap.Pop(pq).(*CacheItem)
+	return item, nil
 }
 
 // Front returns the front element or nil when queue is empty.
-func (que *CacheQueue) Front() (*CacheItem, error) {
-	if que.Len() == 0 {
+func (pq PriorityQueue) TopItem() (*CacheItem, error) {
+	if pq.Len() == 0 {
 		return nil, ErrQueueEmpty
 	}
-	return que.front.item, nil
+	item := pq[0]
+	return item, nil
 }
